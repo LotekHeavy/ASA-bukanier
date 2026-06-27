@@ -1,0 +1,93 @@
+#!/bin/bash
+if [ "$ENABLE_DEBUG" = "1" ]; then
+  echo "Entering debug mode..."
+  sleep 999999999999
+  exit 0
+fi
+
+# download steamcmd if necessary
+if [ ! -d "/home/gameserver/steamcmd/linux32" ]; then
+  cd /home/gameserver/steamcmd
+	wget https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz
+  tar xfvz steamcmd_linux.tar.gz
+fi
+
+# download/update server files
+cd /home/gameserver/steamcmd
+./steamcmd.sh +force_install_dir /home/gameserver/server-files +login anonymous +app_update 2430930 validate +quit
+
+PROTON_VERSION="10-17"
+PROTON_DIR_NAME="GE-Proton$PROTON_VERSION"
+PROTON_ARCHIVE_NAME="$PROTON_DIR_NAME.tar.gz"
+STEAM_COMPAT_DATA=/home/gameserver/server-files/steamapps/compatdata
+STEAM_COMPAT_DIR=/home/gameserver/Steam/compatibilitytools.d
+ASA_COMPAT_DATA=$STEAM_COMPAT_DATA/2430930
+ASA_BINARY_DIR="/home/gameserver/server-files/ShooterGame/Binaries/Win64"
+START_PARAMS_FILE="/home/gameserver/server-files/start-parameters"
+MODS="$(/usr/bin/cli-asa-mods)"
+ASA_START_PARAMS="$ASA_START_PARAMS $MODS"
+ASA_BINARY_NAME="ArkAscendedServer.exe"
+ASA_PLUGIN_BINARY_NAME="AsaApiLoader.exe"
+ASA_PLUGIN_LOADER_ARCHIVE_NAME=$(basename $ASA_BINARY_DIR/AsaApi_*.zip)
+ASA_PLUGIN_LOADER_ARCHIVE_PATH="$ASA_BINARY_DIR/$ASA_PLUGIN_LOADER_ARCHIVE_NAME"
+ASA_PLUGIN_BINARY_PATH="$ASA_BINARY_DIR/$ASA_PLUGIN_BINARY_NAME"
+LAUNCH_BINARY_NAME="$ASA_BINARY_NAME"
+
+# install proton if necessary
+if [ ! -d "$STEAM_COMPAT_DIR/$PROTON_DIR_NAME" ]; then
+  mkdir -p $STEAM_COMPAT_DIR
+  echo "Downloading Proton version $PROTON_VERSION... This might take a while"
+  wget -P /tmp https://github.com/GloriousEggroll/proton-ge-custom/releases/download/GE-Proton$PROTON_VERSION/GE-Proton$PROTON_VERSION.tar.gz
+  EXIT_CODE=$?
+
+  if [ $EXIT_CODE -ne 0 ]; then
+    echo "Error: Error while downloading Proton ($EXIT_CODE)"
+    exit 200
+  fi
+
+  echo "Download finished, comparing checksums..."
+  sha512sum -c /usr/share/proton/GE-Proton$PROTON_VERSION.sha512sum
+
+  if [ $? -ne 0 ]; then
+    echo "Error: Proton checksum mismatch!"
+    exit 201
+  fi
+
+  tar -xf /tmp/$PROTON_ARCHIVE_NAME -C $STEAM_COMPAT_DIR
+  rm /tmp/$PROTON_ARCHIVE_NAME
+fi
+
+# install proton compat game data
+if [ ! -d "$ASA_COMPAT_DATA" ]; then
+  mkdir -p $STEAM_COMPAT_DATA
+  cp -r $STEAM_COMPAT_DIR/$PROTON_DIR_NAME/files/share/default_pfx $ASA_COMPAT_DATA
+fi
+
+echo "Starting the ARK: Survival Ascended dedicated server..."
+echo "Start parameters: $ASA_START_PARAMS"
+
+export XDG_RUNTIME_DIR=/run/user/$(id -u)
+export STEAM_COMPAT_CLIENT_INSTALL_PATH=/home/gameserver/Steam
+export STEAM_COMPAT_DATA_PATH=$ASA_COMPAT_DATA
+
+cd "$ASA_BINARY_DIR"
+
+# unzip the asa plugin api archive if it exists. delete it afterwards
+if [ -f "$ASA_PLUGIN_LOADER_ARCHIVE_PATH" ]; then
+  unzip -o $ASA_PLUGIN_LOADER_ARCHIVE_NAME
+  rm $ASA_PLUGIN_LOADER_ARCHIVE_NAME
+fi
+
+if [ -f "$ASA_PLUGIN_BINARY_PATH" ]; then
+  echo "Detected ASA Server API loader. Launching server through $ASA_PLUGIN_BINARY_NAME"
+  LAUNCH_BINARY_NAME="$ASA_PLUGIN_BINARY_NAME"
+fi
+
+# Steamfix: problematische Steam-Client-DLL kurz vor dem Start entfernen
+STEAMCLIENT_DLL="$ASA_BINARY_DIR/steamclient64.dll"
+if [ -f "$STEAMCLIENT_DLL" ]; then
+    echo "Steamfix: removing steamclient64.dll from $ASA_BINARY_DIR before launch"
+    rm -f "$STEAMCLIENT_DLL" || true
+fi
+
+$STEAM_COMPAT_DIR/$PROTON_DIR_NAME/proton run $LAUNCH_BINARY_NAME $ASA_START_PARAMS

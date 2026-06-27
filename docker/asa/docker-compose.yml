@@ -1,0 +1,330 @@
+# AKR SURIVAL ASCENDED
+#
+# MODS:
+# 1214404 Cybers Pull it                    https://www.curseforge.com/ark-survival-ascended/mods/cyberspullit
+#  948965 Simple Trade                      https://www.curseforge.com/ark-survival-ascended/mods/simple_trade
+#  928548 Shiny                             https://www.curseforge.com/ark-survival-ascended/mods/shiny-ascended
+#  928501 Solo Farm Mod                     https://www.curseforge.com/ark-survival-ascended/mods/solo-farm-mod
+#  935408 Dino Finder                       https://www.curseforge.com/ark-survival-ascended/mods/der-dino-finder
+#  937154 Gnome's Early Tek Binoculars      https://www.curseforge.com/ark-survival-ascended/mods/gnomes-early-tek-binoculars
+#  932975 Crazy's Crazy Ascended Potions    https://www.curseforge.com/ark-survival-ascended/mods/crazys-crazy-ascended-potions
+# 1304113 Adjustable CryoCooldown           https://legacy.curseforge.com/ark-survival-ascended/mods/adjustable-cryocooldown
+#  959521 Breeding Stopper                  https://www.curseforge.com/ark-survival-ascended/mods/breeding-stopper
+#  930381 Silent Structures                 https://www.curseforge.com/ark-survival-ascended/mods/silent-structures/comments
+#  928661 Element And Tribute Transfers     https://www.curseforge.com/ark-survival-ascended/mods/open-source-element-and-tribute-transfers
+#
+# PVE
+# 1058720 Massive Base Protection           https://www.curseforge.com/ark-survival-ascended/mods/klowmassive-test-project
+#
+# PVP
+# 1020675 Hyper's Offline Raid Protection   https://www.curseforge.com/ark-survival-ascended/mods/hypers-offline-raid-protection 
+# 1163881 Better Horde Mode (Extinction)    https://www.curseforge.com/ark-survival-ascended/mods/better-horde-mode-qol-open-source
+#
+# EVENT (asa-server-5)
+# 927084 Love Ascended                      https://www.curseforge.com/ark-survival-ascended/mods/love-evolved
+# 927090 Winter Wonderland                  https://www.curseforge.com/ark-survival-ascended/mods/winter-wonderland
+# 877752 Fear Ascended                      https://www.curseforge.com/ark-survival-ascended/mods/fear-ascended
+# 927091 Summer Bash                        https://www.curseforge.com/ark-survival-ascended/mods/summer-bash
+# 927083 Turkey Trial                       https://www.curseforge.com/ark-survival-ascended/mods/turkey-trial
+#
+services:
+  # ############################################################
+  # Test TEST
+  asa-server-0:
+    container_name: asa-server-0
+    cpus: 4.0
+    restart: "no"
+    stop_grace_period: 3m
+    hostname: asa-server-0
+    entrypoint: "/usr/bin/start_server"
+    user: gameserver
+    image: "mschnitzer/asa-linux-server:latest"
+    profiles: [all, test, testgroup]
+    tty: true
+    environment:
+      - ASA_START_PARAMS=TheIsland_WP?listen?Port=7700?RCONPort=27000?RCONEnabled=True -WinLiveMaxPlayers=40 -GBUsageToForceRestart=40 -culture=en -clusterid=bukanier -ClusterDirOverride="/home/gameserver/cluster-shared" -NoTransferFromFiltering -SecureSendArKPayload -structurememopts -UseStructureStasisGrid -EnableIdlePlayerKick -servergamelog -servergamelogincludetribelogs -ServerRCONOutputTribeLogs -DoCustomCosmeticValidation -UseDynamicConfig -noundermeshkilling -NoGameAnalytics -UseItemDupeCheck -ForceDupeLog -mods=1058720,1214404,948965,928548,928501,935408,937154,932975,1304113,959521,930381,928661
+      - ENABLE_DEBUG=0
+    ports:
+      - 0.0.0.0:7700:7700/udp
+      - 0.0.0.0:27000:27000/tcp
+    depends_on: 
+      - set-permissions-0
+    volumes:
+      - /home/ark/docker/asa/start_server-steamfix.sh:/usr/bin/start_server:ro
+      - steam-0:/home/gameserver/Steam:rw
+      - steamcmd-0:/home/gameserver/steamcmd:rw
+      - server-files-0:/home/gameserver/server-files:rw
+      - cluster-shared:/home/gameserver/cluster-shared:rw
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      asa-network:
+  set-permissions-0:
+    entrypoint: "/bin/bash -c 'chown -R 25000:25000 /steam ; chown -R 25000:25000 /steamcmd ; chown -R 25000:25000 /server-files ; chown -R 25000:25000 /cluster-shared'"
+    user: root
+    image: "opensuse/leap"
+    profiles: [all, test, testgroup]
+    volumes:
+      - steam-0:/steam:rw
+      - steamcmd-0:/steamcmd:rw
+      - server-files-0:/server-files:rw
+      - cluster-shared:/cluster-shared:rw
+  # ############################################################
+  # Island HOME
+  asa-server-1:
+    container_name: asa-server-1
+    cpus: 4.0
+    stop_grace_period: 3m
+    hostname: asa-server-1
+    entrypoint: "/usr/bin/start_server"
+    user: gameserver
+    image: "mschnitzer/asa-linux-server:latest"
+    profiles: [all, home, island]
+    tty: true
+    environment:
+      - ASA_START_PARAMS=TheIsland_WP?listen?Port=7710?RCONPort=27001?RCONEnabled=True -WinLiveMaxPlayers=40 -GBUsageToForceRestart=40 -culture=en -clusterid=bukanier -ClusterDirOverride="/home/gameserver/cluster-shared" -NoTransferFromFiltering -SecureSendArKPayload -structurememopts -UseStructureStasisGrid -EnableIdlePlayerKick -servergamelog -servergamelogincludetribelogs -ServerRCONOutputTribeLogs -DoCustomCosmeticValidation -UseDynamicConfig -noundermeshkilling -NoGameAnalytics -UseItemDupeCheck -ForceDupeLog -mods=1058720,1214404,948965,928548,928501,935408,937154,932975,1304113,959521,930381,928661
+      - ENABLE_DEBUG=0
+    ports:
+      - 0.0.0.0:7710:7710/udp
+      - 0.0.0.0:27001:27001/tcp
+    depends_on: 
+      - set-permissions-1
+    volumes:
+      - /home/ark/docker/asa/start_server-steamfix.sh:/usr/bin/start_server:ro
+      - steam-1:/home/gameserver/Steam:rw
+      - steamcmd-1:/home/gameserver/steamcmd:rw
+      - server-files-1:/home/gameserver/server-files:rw
+      - cluster-shared:/home/gameserver/cluster-shared:rw
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      asa-network:
+  set-permissions-1:
+    entrypoint: "/bin/bash -c 'chown -R 25000:25000 /steam ; chown -R 25000:25000 /steamcmd ; chown -R 25000:25000 /server-files ; chown -R 25000:25000 /cluster-shared'"
+    user: root
+    image: "opensuse/leap"
+    profiles: [all, home, island]
+    volumes:
+      - steam-1:/steam:rw
+      - steamcmd-1:/steamcmd:rw
+      - server-files-1:/server-files:rw
+      - cluster-shared:/cluster-shared:rw
+  # ############################################################
+  # Scorched Earth PVP
+  asa-server-2:
+    container_name: asa-server-2
+    cpus: 4.0
+    stop_grace_period: 2m
+    hostname: asa-server-2
+    entrypoint: "/usr/bin/start_server"
+    user: gameserver
+    image: "mschnitzer/asa-linux-server:latest"
+    profiles: [all, pvp, scorchedearth]
+    tty: true
+    environment:
+      - ASA_START_PARAMS=ScorchedEarth_WP?listen?Port=7720?RCONPort=27002?RCONEnabled=True -WinLiveMaxPlayers=30 -GBUsageToForceRestart=35 -culture=en -clusterid=bukanier -ClusterDirOverride="/home/gameserver/cluster-shared" -NoTransferFromFiltering -SecureSendArKPayload -structurememopts -UseStructureStasisGrid -EnableIdlePlayerKick -servergamelog -servergamelogincludetribelogs -ServerRCONOutputTribeLogs -DoCustomCosmeticValidation -UseDynamicConfig -AutoDestroyStructures -NoGameAnalytics -UseItemDupeCheck -ForceDupeLog -mods=1020675,1214404,948965,928548,928501,935408,937154,932975,1304113,959521,930381,928661,927091
+    ports:
+      - 0.0.0.0:7720:7720/udp
+      - 0.0.0.0:27002:27002/tcp
+    depends_on:
+      - set-permissions-2
+    volumes:
+      - /home/ark/docker/asa/start_server-steamfix.sh:/usr/bin/start_server:ro
+      - steam-2:/home/gameserver/Steam:rw
+      - steamcmd-2:/home/gameserver/steamcmd:rw
+      - server-files-2:/home/gameserver/server-files:rw
+      - cluster-shared:/home/gameserver/cluster-shared:rw
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      asa-network:
+  set-permissions-2:
+    entrypoint: "/bin/bash -c 'chown -R 25000:25000 /steam ; chown -R 25000:25000 /steamcmd ; chown -R 25000:25000 /server-files ; chown -R 25000:25000 /cluster-shared'"
+    user: root
+    image: "opensuse/leap"
+    profiles: [all, pvp, scorchedearth]
+    volumes:
+      - steam-2:/steam:rw
+      - steamcmd-2:/steamcmd:rw
+      - server-files-2:/server-files:rw
+      - cluster-shared:/cluster-shared:rw
+  # ############################################################
+  # Aberration PVP
+  asa-server-3:
+    container_name: asa-server-3
+    cpus: 4.0
+    stop_grace_period: 2m
+    hostname: asa-server-3
+    entrypoint: "/usr/bin/start_server"
+    user: gameserver
+    image: "mschnitzer/asa-linux-server:latest"
+    profiles: [all, pvp, aberration]
+    tty: true
+    environment:
+      - ASA_START_PARAMS=Aberration_WP?listen?Port=7730?RCONPort=27003?RCONEnabled=True -WinLiveMaxPlayers=30 -GBUsageToForceRestart=35 -culture=en -clusterid=bukanier -ClusterDirOverride="/home/gameserver/cluster-shared" -NoTransferFromFiltering -SecureSendArKPayload -structurememopts -UseStructureStasisGrid -EnableIdlePlayerKick -servergamelog -servergamelogincludetribelogs -ServerRCONOutputTribeLogs -DoCustomCosmeticValidation -UseDynamicConfig -AutoDestroyStructures -NoGameAnalytics -UseItemDupeCheck -ForceDupeLog -mods=1020675,1214404,948965,928548,928501,935408,937154,932975,1304113,959521,930381,928661
+    ports:
+      - 0.0.0.0:7730:7730/udp
+      - 0.0.0.0:27003:27003/tcp
+    depends_on:
+      - set-permissions-3
+    volumes:
+      - /home/ark/docker/asa/start_server-steamfix.sh:/usr/bin/start_server:ro
+      - steam-3:/home/gameserver/Steam:rw
+      - steamcmd-3:/home/gameserver/steamcmd:rw
+      - server-files-3:/home/gameserver/server-files:rw
+      - cluster-shared:/home/gameserver/cluster-shared:rw
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      asa-network:
+  set-permissions-3:
+    entrypoint: "/bin/bash -c 'chown -R 25000:25000 /steam ; chown -R 25000:25000 /steamcmd ; chown -R 25000:25000 /server-files ; chown -R 25000:25000 /cluster-shared'"
+    user: root
+    image: "opensuse/leap"
+    profiles: [all, pvp, aberration]
+    volumes:
+      - steam-3:/steam:rw
+      - steamcmd-3:/steamcmd:rw
+      - server-files-3:/server-files:rw
+      - cluster-shared:/cluster-shared:rw
+  # ############################################################
+  # Extinction PVP 
+  asa-server-4:
+    container_name: asa-server-4
+    cpus: 4.0
+    stop_grace_period: 2m
+    hostname: asa-server-4
+    entrypoint: "/usr/bin/start_server"
+    user: gameserver
+    image: "mschnitzer/asa-linux-server:latest"
+    profiles: [all, pvp, extinction]
+    tty: true
+    environment:
+      - ASA_START_PARAMS=Extinction_WP?listen?Port=7740?RCONPort=27004?RCONEnabled=True -WinLiveMaxPlayers=30 -GBUsageToForceRestart=35 -culture=en -clusterid=bukanier -ClusterDirOverride="/home/gameserver/cluster-shared" -NoTransferFromFiltering -SecureSendArKPayload -structurememopts -UseStructureStasisGrid -EnableIdlePlayerKick -servergamelog -servergamelogincludetribelogs -ServerRCONOutputTribeLogs -DoCustomCosmeticValidation -UseDynamicConfig -AutoDestroyStructures -NoGameAnalytics -UseItemDupeCheck -ForceDupeLog -mods=1020675,1214404,948965,928548,928501,935408,937154,932975,1304113,959521,1163881,930381,928661
+    ports:
+      - 0.0.0.0:7740:7740/udp
+      - 0.0.0.0:27004:27004/tcp
+    depends_on:
+      - set-permissions-4
+    volumes:
+      - /home/ark/docker/asa/start_server-steamfix.sh:/usr/bin/start_server:ro
+      - steam-4:/home/gameserver/Steam:rw
+      - steamcmd-4:/home/gameserver/steamcmd:rw
+      - server-files-4:/home/gameserver/server-files:rw
+      - cluster-shared:/home/gameserver/cluster-shared:rw
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      asa-network:
+  set-permissions-4:
+    entrypoint: "/bin/bash -c 'chown -R 25000:25000 /steam ; chown -R 25000:25000 /steamcmd ; chown -R 25000:25000 /server-files ; chown -R 25000:25000 /cluster-shared'"
+    user: root
+    image: "opensuse/leap"
+    profiles: [all, pvp, extinction]
+    volumes:
+      - steam-4:/steam:rw
+      - steamcmd-4:/steamcmd:rw
+      - server-files-4:/server-files:rw
+      - cluster-shared:/cluster-shared:rw
+  # ############################################################
+  # ROTATION MAPS:
+  asa-server-5:
+    container_name: asa-server-5
+    cpus: 4.0
+    stop_grace_period: 2m
+    hostname: asa-server-5
+    entrypoint: "/usr/bin/start_server"
+    user: gameserver
+    image: "mschnitzer/asa-linux-server:latest"
+    profiles: [all, rotation]
+    tty: true
+    environment:
+      - ASA_START_PARAMS=LostColony_WP?listen?Port=7750?RCONPort=27005?RCONEnabled=True -WinLiveMaxPlayers=20 -GBUsageToForceRestart=35 -culture=en -clusterid=bukanier -ClusterDirOverride="/home/gameserver/cluster-shared" -NoTransferFromFiltering -SecureSendArKPayload -structurememopts -UseStructureStasisGrid -EnableIdlePlayerKick -servergamelog -servergamelogincludetribelogs -ServerRCONOutputTribeLogs -DoCustomCosmeticValidation -UseDynamicConfig -noundermeshkilling -AutoDestroyStructures -NoGameAnalytics -UseItemDupeCheck -ForceDupeLog -ForceRespawnDinos -mods=1214404,948965,928548,928501,935408,937154,932975,1304113,959521,930381,928661
+    ports:
+      - 0.0.0.0:7750:7750/udp
+      - 0.0.0.0:27005:27005/tcp
+    depends_on:
+      - set-permissions-5
+    volumes:
+      - /home/ark/docker/asa/start_server-steamfix.sh:/usr/bin/start_server:ro
+      - steam-5:/home/gameserver/Steam:rw
+      - steamcmd-5:/home/gameserver/steamcmd:rw
+      - server-files-5:/home/gameserver/server-files:rw
+      - cluster-shared:/home/gameserver/cluster-shared:rw
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      asa-network:
+  set-permissions-5:
+    entrypoint: "/bin/bash -c 'chown -R 25000:25000 /steam ; chown -R 25000:25000 /steamcmd ; chown -R 25000:25000 /server-files ; chown -R 25000:25000 /cluster-shared'"
+    user: root
+    image: "opensuse/leap"
+    profiles: [all, rotation]
+    volumes:
+      - steam-5:/steam:rw
+      - steamcmd-5:/steamcmd:rw
+      - server-files-5:/server-files:rw
+      - cluster-shared:/cluster-shared:rw
+  # ############################################################
+  # Genesis 1 MAPS:
+  asa-server-6:
+    container_name: asa-server-6
+    restart: "no"
+    cpus: 4.0
+    stop_grace_period: 2m
+    hostname: asa-server-6
+    entrypoint: "/usr/bin/start_server"
+    user: gameserver
+    image: "mschnitzer/asa-linux-server:latest"
+    profiles: [genesis]
+    tty: true
+    environment:
+      - ASA_START_PARAMS=Genesis_WP?listen?Port=7760?RCONPort=27006?RCONEnabled=True -WinLiveMaxPlayers=30 -GBUsageToForceRestart=35 -culture=en -clusterid=bukanier -ClusterDirOverride="/home/gameserver/cluster-shared" -NoTransferFromFiltering -SecureSendArKPayload -structurememopts -UseStructureStasisGrid -EnableIdlePlayerKick -servergamelog -servergamelogincludetribelogs -ServerRCONOutputTribeLogs -DoCustomCosmeticValidation -UseDynamicConfig -AutoDestroyStructures -NoGameAnalytics -UseItemDupeCheck -ForceDupeLog -mods=1020675,1214404,948965,928548,928501,935408,937154,932975,1304113,959521,930381,928661
+    ports:
+      - 0.0.0.0:7760:7760/udp
+      - 0.0.0.0:27006:27006/tcp
+    depends_on:
+      - set-permissions-6
+    volumes:
+      - /home/ark/docker/asa/start_server-steamfix.sh:/usr/bin/start_server:ro
+      - steam-6:/home/gameserver/Steam:rw
+      - steamcmd-6:/home/gameserver/steamcmd:rw
+      - server-files-6:/home/gameserver/server-files:rw
+      - cluster-shared:/home/gameserver/cluster-shared:rw
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      asa-network:
+  set-permissions-6:
+    entrypoint: "/bin/bash -c 'chown -R 25000:25000 /steam ; chown -R 25000:25000 /steamcmd ; chown -R 25000:25000 /server-files ; chown -R 25000:25000 /cluster-shared'"
+    user: root
+    image: "opensuse/leap"
+    profiles: [genesis]
+    volumes:
+      - steam-6:/steam:rw
+      - steamcmd-6:/steamcmd:rw
+      - server-files-6:/server-files:rw
+      - cluster-shared:/cluster-shared:rw
+# ############################################################
+# Volumes
+volumes:
+  cluster-shared:
+  steam-0:
+  steamcmd-0:
+  server-files-0:
+  steam-1:
+  steamcmd-1:
+  server-files-1:
+  steam-2:
+  steamcmd-2:
+  server-files-2:
+  steam-3:
+  steamcmd-3:
+  server-files-3:
+  steam-4:
+  steamcmd-4:
+  server-files-4:
+  steam-5:
+  steamcmd-5:
+  server-files-5:
+  steam-6:
+  steamcmd-6:
+  server-files-6:
+# ############################################################
+# Networks
+networks:
+  asa-network:
+    external: true
